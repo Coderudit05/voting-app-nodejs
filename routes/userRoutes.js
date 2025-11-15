@@ -10,6 +10,12 @@ const {
 
 const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
 
+// ****************** Signup Route *******************************************************************
+
+router.get("/signup-page", (req, res) => {
+  res.render("signup");
+});
+
 // POST /signup
 router.post("/signup", async (req, res) => {
   try {
@@ -35,11 +41,9 @@ router.post("/signup", async (req, res) => {
     });
 
     if (existingUser) {
-      return res
-        .status(409)
-        .json({
-          message: "User with this email/mobile/aadhaar already exists",
-        });
+      return res.status(409).json({
+        message: "User with this email/mobile/aadhaar already exists",
+      });
     }
 
     // 3. Hash password
@@ -66,10 +70,7 @@ router.post("/signup", async (req, res) => {
       role: newUser.role,
     };
 
-    res.status(201).json({
-      message: "Signup successful",
-      user: safeUser,
-    });
+    return res.redirect("/api/v1/login-page?success=signup");
   } catch (error) {
     console.error("Signup Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -78,7 +79,11 @@ router.post("/signup", async (req, res) => {
 
 // ****************** Login Route *******************************************************************
 
-// POST /login
+router.get("/login-page", (req, res) => {
+  const success = req.query.success;
+  res.render("login", { success });
+});
+
 // POST /login
 router.post("/login", async (req, res) => {
   try {
@@ -116,11 +121,8 @@ router.post("/login", async (req, res) => {
       role: user.role,
     };
 
-    res.json({
-      message: "Login successful",
-      token,
-      user: safeUser,
-    });
+    res.cookie("token", token, { httpOnly: true }); // Create a cookie named 'token' with the JWT token value
+    return res.redirect("/api/v1/profile-page?success=login");
   } catch (error) {
     console.error("Login Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -160,6 +162,91 @@ router.get("/profile", jwtAuthMiddleware, async (req, res) => {
     res.json({ profile });
   } catch (error) {
     console.log("Profile Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/profile-page", jwtAuthMiddleware, async (req, res) => {
+  const success = req.query.success; // we capture ?success=login
+  const user = await User.findById(req.user.id);
+  const masked = user.aadharCardNumber.slice(-4);
+
+  res.render("profile", {
+    success,
+    user: {
+      ...user._doc,
+      aadharLast4: masked,
+    },
+  });
+});
+
+// ****************** Update Profile *******************************************************************
+
+// PATCH /profile/update - Update user details
+router.patch("/profile/update", jwtAuthMiddleware, async (req, res) => {
+  try {
+    // Step 1: Get user ID from req.user
+    const userId = req.user.id;
+
+    // Step 2: Validate allowed updates means only these fields can be updated
+    const allowedUpdates = ["name", "age", "mobile", "address"];
+
+    // Step 3: Build update object so that only allowed fields are updated
+    const updates = {};
+
+    // Build update object safely
+    // Ye loop ka matlab hai ki hum allowedUpdates array ke har field ke liye check kar rahe hain ki kya wo req.body mein hai.
+    // Agar hai, to hum us field ko updates object mein add kar rahe hain with its new value.
+    allowedUpdates.forEach((field) => {
+      if (req.body[field]) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    // If nothing to update that means user must provide at least one valid field to update
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No valid fields to update" });
+    }
+
+    // Step 4: Update user in DB
+
+    // Iska matlab hai ki hum User model ka use karke user ko uske ID se dhundh rahe hain aur uske fields ko updates object ke hisab se update kar rahe hain.
+    // { new: true } ka matlab hai ki hum updated document ko return karna chahte hain.
+    // { runValidators: true } ka matlab hai ki hum chahte hain ki Mongoose schema validators ko update ke dauran chalaya jaye.
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true } // only modify the specified fields and enture updated data follows schema rules
+    );
+
+    // Step 5: Send response to client if user not found then send 404
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // mask aadhar for response
+    const maskedAadhar = updatedUser.aadharCardNumber.slice(-4);
+
+    // Here we will update the profile object to send back the updated user details to the client
+    // only those fields jo hamne modify kiye hain wo hi update honge response mein baki sab waise ke waise rahenge old values ke saath
+
+    const profile = {
+      id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      mobile: updatedUser.mobile,
+      address: updatedUser.address,
+      aadharLast4: maskedAadhar,
+      role: updatedUser.role,
+      isVoted: updatedUser.isVoted,
+    };
+
+    res.json({
+      message: "Profile updated successfully",
+      profile,
+    });
+  } catch (error) {
+    console.log("Update Profile Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

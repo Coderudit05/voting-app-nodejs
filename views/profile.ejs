@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen py-8 px-4">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
+        <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">User Profile</h2>
+
+        <% if (typeof success !=="undefined" && success==="login" ) { %>
+            <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-center">
+                Login successful!
+            </div>
+            <% } %>
+
+
+                <div class="space-y-4">
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="font-semibold">Name:</span>
+                        <span>
+                            <%= user.name %>
+                        </span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="font-semibold">Email:</span>
+                        <span>
+                            <%= user.email %>
+                        </span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="font-semibold">Mobile:</span>
+                        <span>
+                            <%= user.mobile %>
+                        </span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="font-semibold">Address:</span>
+                        <span>
+                            <%= user.address %>
+                        </span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="font-semibold">Aadhaar:</span>
+                        <span>**** **** **** <%= user.aadharLast4 %></span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="font-semibold">Role:</span>
+                        <span>
+                            <%= user.role %>
+                        </span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="font-semibold">Voted:</span>
+                        <span class="<%= user.isVoted ? 'text-green-600' : 'text-red-600' %> font-semibold">
+                            <%= user.isVoted ? "Yes" : "No" %>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <a href="/update-profile"
+                        class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition duration-200">
+                        Edit Profile
+                    </a>
+                </div>
+    </div>
+</body>
+
+</html>
