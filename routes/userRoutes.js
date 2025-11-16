@@ -122,6 +122,7 @@ router.post("/login", async (req, res) => {
     };
 
     res.cookie("token", token, { httpOnly: true }); // Create a cookie named 'token' with the JWT token value
+
     return res.redirect("/api/v1/profile-page?success=login");
   } catch (error) {
     console.error("Login Error:", error);
@@ -130,8 +131,6 @@ router.post("/login", async (req, res) => {
 });
 
 // ****************** Profile Route *******************************************************************
-
-// GET /profile
 
 router.get("/profile", jwtAuthMiddleware, async (req, res) => {
   try {
@@ -147,6 +146,7 @@ router.get("/profile", jwtAuthMiddleware, async (req, res) => {
 
     // Step 3: Mask aadharCardNumber that means show only last 4 digits
     const maskAadhar = "************" + user.aadharCardNumber.slice(-4);
+
 
     const profile = {
       id: user._id,
@@ -166,13 +166,17 @@ router.get("/profile", jwtAuthMiddleware, async (req, res) => {
   }
 });
 
+// yaha par ham profile page render kar rahe hain jisme user ki details hongi and agar user valid hai toh ham usko profile page par le jayenge
 router.get("/profile-page", jwtAuthMiddleware, async (req, res) => {
-  const success = req.query.success; // we capture ?success=login
+  const success = req.query.success; // ?success=login
+  const updated = req.query.updated; // ?updated=true
+
   const user = await User.findById(req.user.id);
   const masked = user.aadharCardNumber.slice(-4);
 
   res.render("profile", {
     success,
+    updated,
     user: {
       ...user._doc,
       aadharLast4: masked,
@@ -182,8 +186,20 @@ router.get("/profile-page", jwtAuthMiddleware, async (req, res) => {
 
 // ****************** Update Profile *******************************************************************
 
+// Jab user profile update krne kai liye jayega toh ye page par render hoga which is updateProfile.ejs
+
+router.get("/update-profile", jwtAuthMiddleware, async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password");
+
+  if (!user) {
+    return res.status(404).send("User not found");
+  }
+
+  res.render("updateProfile", { user });
+});
+
 // PATCH /profile/update - Update user details
-router.patch("/profile/update", jwtAuthMiddleware, async (req, res) => {
+router.post("/profile/update", jwtAuthMiddleware, async (req, res) => {
   try {
     // Step 1: Get user ID from req.user
     const userId = req.user.id;
@@ -241,14 +257,18 @@ router.patch("/profile/update", jwtAuthMiddleware, async (req, res) => {
       isVoted: updatedUser.isVoted,
     };
 
-    res.json({
-      message: "Profile updated successfully",
-      profile,
-    });
+    return res.redirect("/api/v1/profile-page?updated=true");
   } catch (error) {
     console.log("Update Profile Error:", error);
     res.status(500).json({ message: "Server error" });
   }
+});
+
+// ****************** Logout Route *******************************************************************
+
+router.get("/logout", (req, res) => {
+  res.clearCookie("token");        // delete the token cookie
+  return res.redirect("/api/v1/login-page?success=logout");
 });
 
 module.exports = router;
