@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>All Users</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+
+        <h1 class="text-3xl font-bold mb-6 text-center">All Registered Users</h1>
+
+        <!-- Search Bar -->
+        <div class="mb-6">
+            <input id="searchInput" type="text" placeholder="Search users by name, email, mobile, or role..."
+                class="w-full p-3 border rounded shadow-sm">
+        </div>
+
+        <% if (typeof success !=="undefined" && success==="blocked" ) { %>
+            <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-center">
+                User has been blocked!
+            </div>
+            <% } %>
+
+                <% if (typeof success !=="undefined" && success==="unblocked" ) { %>
+                    <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-center">
+                        User has been unblocked!
+                    </div>
+                    <% } %>
+
+                        <% if (typeof error !=="undefined" && error==="server" ) { %>
+                            <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-center">
+                                Server error! Try again.
+                            </div>
+                            <% } %>
+
+
+
+                                <!-- Table -->
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-200">
+                                            <th class="p-3 text-left cursor-pointer sort" data-column="name">Name</th>
+                                            <th class="p-3 text-left cursor-pointer sort" data-column="email">Email</th>
+                                            <th class="p-3 text-left cursor-pointer sort" data-column="mobile">Mobile
+                                            </th>
+                                            <th class="p-3 text-left cursor-pointer sort" data-column="role">Role</th>
+                                            <th class="p-3 text-left cursor-pointer sort" data-column="aadhaar">Aadhaar
+                                            </th>
+                                            <th class="p-3 text-left cursor-pointer sort" data-column="voted">Voted?
+                                            </th>
+                                        </tr>
+                                    </thead>
+
+
+                                    <tbody>
+                                        <% users.forEach(u=> { %>
+                                            <tr class="border-b">
+
+                                                <td class="p-3">
+                                                    <%= u.name %>
+                                                </td>
+                                                <td class="p-3">
+                                                    <%= u.email %>
+                                                </td>
+                                                <td class="p-3">
+                                                    <%= u.mobile %>
+                                                </td>
+                                                <td class="p-3 font-semibold">
+                                                    <%= u.role %>
+                                                </td>
+
+                                                <td class="p-3">
+                                                    **** **** **** <%= u.aadharLast4 %>
+                                                </td>
+
+                                                <td
+                                                    class="p-3 <%= u.isVoted ? 'text-green-600' : 'text-red-600' %> font-bold">
+                                                    <%= u.isVoted ? "YES" : "NO" %>
+                                                </td>
+
+                                                <!-- Block / Unblock Buttons -->
+                                                <td class="p-3">
+
+                                                    <% if (u.role !=="admin" ) { %>
+
+                                                        <% if (u.isBlocked) { %>
+                                                            <form action="/admin/unblock-user/<%= u._id %>"
+                                                                method="POST">
+                                                                <button
+                                                                    class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                                                                    Unblock
+                                                                </button>
+                                                            </form>
+                                                            <% } else { %>
+                                                                <form action="/admin/block-user/<%= u._id %>"
+                                                                    method="POST">
+                                                                    <button
+                                                                        class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+                                                                        Block
+                                                                    </button>
+                                                                </form>
+                                                                <% } %>
+
+                                                                    <% } else { %>
+                                                                        <span class="text-gray-500">Super Admin</span>
+                                                                        <% } %>
+
+                                                </td>
+
+                                            </tr>
+                                            <% }) %>
+                                    </tbody>
+
+
+                                </table>
+
+                                <div class="text-center mt-6">
+                                    <a href="/api/v1/admin/dashboard" class="text-blue-600 hover:underline">
+                                        Back to Dashboard
+                                    </a>
+                                </div>
+
+    </div>
+    <script>
+        const searchInput = document.getElementById("searchInput");
+        const tableRows = document.querySelectorAll("tbody tr");
+
+        searchInput.addEventListener("keyup", function () {
+            const query = this.value.toLowerCase();
+
+            tableRows.forEach(row => {
+                const rowText = row.innerText.toLowerCase();
+                row.style.display = rowText.includes(query) ? "" : "none";
+            });
+        });
+    </script>
+    <script>
+        const getCellValue = (row, index) =>
+            row.children[index].innerText.trim().toLowerCase();
+
+        const comparer = (index, asc) => (a, b) => {
+            const v1 = getCellValue(a, index);
+            const v2 = getCellValue(b, index);
+
+            // Numeric sort
+            if (!isNaN(v1) && !isNaN(v2)) {
+                return asc ? v1 - v2 : v2 - v1;
+            }
+
+            // String sort
+            return asc ? v1.localeCompare(v2) : v2.localeCompare(v1);
+        };
+
+        document.querySelectorAll("th.sort").forEach((th, index) => {
+            th.addEventListener("click", () => {
+                const table = th.closest("table");
+                const tbody = table.querySelector("tbody");
+
+                // Toggle sorting direction
+                const asc = th.asc = !th.asc;
+
+                Array.from(tbody.querySelectorAll("tr"))
+                    .sort(comparer(index, asc))
+                    .forEach(tr => tbody.appendChild(tr));
+
+                // Update visual arrow indicator
+                document.querySelectorAll("th.sort").forEach(h => h.innerText = h.innerText.replace(" ↑", "").replace(" ↓", ""));
+
+                th.innerText += asc ? " ↑" : " ↓";
+            });
+        });
+    </script>
+</body>
+
+</html>

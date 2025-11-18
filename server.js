@@ -1,7 +1,14 @@
 require("dotenv").config();
 const express = require("express");
 const app = express();
+
+
+// ********************************************************
+// Importing User and Admin Routes
 const userRoutes = require("./routes/userRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+// ********************************************************
+
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 
@@ -19,11 +26,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// They are for the user routes
 app.use("/api/v1", userRoutes);
 
 app.get("/", (req, res) => {
   res.render("login");
 });
+
+// They are for the admin routes
+
+app.use("/admin", adminRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

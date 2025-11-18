@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Candidate</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-10">
+
+  <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-2xl font-bold mb-4 text-center">Add New Candidate</h2>
+
+    <form action="/api/v1/admin/add-candidate" method="POST" class="space-y-4">
+      <input type="text" name="name" placeholder="Candidate Name" required class="w-full px-4 py-2 border rounded">
+      <input type="text" name="party" placeholder="Party Name" required class="w-full px-4 py-2 border rounded">
+      <input type="number" name="age" placeholder="Age" min="18" required class="w-full px-4 py-2 border rounded">
+
+      <button class="bg-blue-600 text-white w-full py-2 rounded">Add Candidate</button>
+    </form>
+
+    <a href="/api/v1/admin/candidates" class="block text-center text-blue-600 mt-4">View Candidates</a>
+  </div>
+
+</body>
+</html>

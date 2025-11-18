@@ -20,9 +20,15 @@
             <% } %>
 
             <!-- Agar user logout hua hai toh ye message dikhayenge -->
-                <% if (success==="logout" ) { %>
+                <% if (typeof success !== "undefined" && success === "logout") { %>
                     <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-center">
                         Logged out successfully!
+                    </div>
+                    <% } %>
+
+                <% if (typeof blocked !== "undefined" && blocked) { %>
+                    <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-center">
+                        Your account is blocked. Contact admin.
                     </div>
                     <% } %>
 

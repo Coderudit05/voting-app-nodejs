@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Candidate</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-10">
+
+<div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
+
+  <h2 class="text-2xl font-bold mb-4 text-center">Edit Candidate</h2>
+
+  <form action="/admin/update-candidate/<%= candidate._id %>" method="POST" class="space-y-4">
+
+    <input 
+      type="text" 
+      name="name"
+      value="<%= candidate.name %>"
+      class="w-full border p-2 rounded"
+      placeholder="Candidate Name"
+      required
+    />
+
+    <input 
+      type="text" 
+      name="party"
+      value="<%= candidate.party %>"
+      class="w-full border p-2 rounded"
+      placeholder="Party Name"
+      required
+    />
+
+    <input 
+      type="number" 
+      name="age"
+      value="<%= candidate.age %>"
+      class="w-full border p-2 rounded"
+      placeholder="Age"
+      required
+    />
+
+    <button class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+      Update Candidate
+    </button>
+
+  </form>
+
+  <div class="text-center mt-4">
+    <a href="/admin/candidates" class="text-blue-600 hover:underline">Back to List</a>
+  </div>
+</div>
+
+</body>
+</html>

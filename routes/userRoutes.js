@@ -2,17 +2,22 @@ const express = require("express");
 const router = express.Router();
 const User = require("../model/user");
 const bcrypt = require("bcrypt");
+
+const Candidate = require("../model/candidate");
+
 require("dotenv").config();
 const {
   generateToken,
   jwtAuthMiddleware,
+  redirectIfAuthenticated,
 } = require("../middleware/authMiddleware");
 
 const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
 
 // ****************** Signup Route *******************************************************************
 
-router.get("/signup-page", (req, res) => {
+// render signup page — do not allow if already logged-in
+router.get("/signup-page", redirectIfAuthenticated, (req, res) => {
   res.render("signup");
 });
 
@@ -79,10 +84,13 @@ router.post("/signup", async (req, res) => {
 
 // ****************** Login Route *******************************************************************
 
-router.get("/login-page", (req, res) => {
+// render login page — do not allow if already logged-in
+router.get("/login-page", redirectIfAuthenticated, (req, res) => {
   const success = req.query.success;
-  res.render("login", { success });
+  const blocked = req.query.blocked;   // add this
+  res.render("login", { success, blocked });
 });
+
 
 // POST /login
 router.post("/login", async (req, res) => {
@@ -101,6 +109,11 @@ router.post("/login", async (req, res) => {
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Check if user is blocked
+    if (user.isBlocked) {
+      return res.redirect("/api/v1/login-page?blocked=true");
     }
 
     // Step 3: Compare password using bcrypt
@@ -146,7 +159,6 @@ router.get("/profile", jwtAuthMiddleware, async (req, res) => {
 
     // Step 3: Mask aadharCardNumber that means show only last 4 digits
     const maskAadhar = "************" + user.aadharCardNumber.slice(-4);
-
 
     const profile = {
       id: user._id,
@@ -267,8 +279,133 @@ router.post("/profile/update", jwtAuthMiddleware, async (req, res) => {
 // ****************** Logout Route *******************************************************************
 
 router.get("/logout", (req, res) => {
-  res.clearCookie("token");        // delete the token cookie
+  res.clearCookie("token"); // delete the token cookie
   return res.redirect("/api/v1/login-page?success=logout");
 });
+
+// **************** Show all candidates to users ****************************************
+
+router.get("/candidates", jwtAuthMiddleware, async (req, res) => {
+  try {
+    // fetch candidates
+    const candidates = await Candidate.find();
+
+    // fetch full user from DB so we have isVoted and other fields (NOT just req.user)
+    const user = await User.findById(req.user.id).select("-password");
+
+    // read query params for messages
+    const success = req.query.success;
+    const error = req.query.error;
+
+    // render and pass user, candidates and messages
+    res.render("candidates", {
+      candidates,
+      user,
+      success,
+      error,
+    });
+  } catch (error) {
+    console.log("Candidate List Error:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+// ****************** VOTE ROUTE *******************************************************************
+
+// When user votes for a candidate so ye route hit hoga and vote process hoga and fir redirect kar dega candidates page par with success or error message
+router.post("/vote/:candidateId", jwtAuthMiddleware, async (req, res) => {
+  try {
+    //  Get user ID and candidate ID
+    const userId = req.user.id;
+    const candidateId = req.params.candidateId;
+
+    // Step 1: User detail fetch
+    const user = await User.findById(userId);
+
+    // Step 2: Check if already voted
+    if (user.isVoted) {
+      return res.redirect("/api/v1/candidates?error=already_voted");
+    }
+
+    // Step 3: Candidate fetch
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate) {
+      return res.redirect("/api/v1/candidates?error=candidate_not_found");
+    }
+
+    // Step 4: Add vote to candidate's votes array
+    candidate.votes.push({
+      user: userId,
+      votedAt: new Date(),
+    });
+
+    // Step 5: Increase vote count
+    candidate.voteCount += 1;
+
+    // Step 6: Save updated candidate
+    await candidate.save();
+
+    // Step 7: Update user voted status
+    user.isVoted = true;
+    await user.save();
+
+    // Step 8: Redirect back with success message
+    return res.redirect("/api/v1/candidates?success=voted");
+  } catch (error) {
+    console.log("Vote Error:", error);
+    return res.redirect("/api/v1/candidates?error=server_error");
+  }
+});
+
+
+// **************** RESULTS PAGE (rendered) ************************************
+router.get("/results", jwtAuthMiddleware, async (req, res) => {
+  try {
+    // 1) fetch all candidates, sorted by voteCount desc (highest first)
+    const candidates = await Candidate.find().sort({ voteCount: -1 });
+
+    // 2) compute total votes across all candidates
+    const totalVotes = candidates.reduce((sum, c) => sum + (c.voteCount || 0), 0);
+
+    // 3) fetch full user for any UI logic (optional)
+    const user = await User.findById(req.user.id).select("-password");
+
+    // 4) render the results page with required data
+    res.render("results", {
+      candidates,
+      totalVotes,
+      user
+    });
+  } catch (err) {
+    console.error("Results page error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+
+// **************** RESULTS DATA API (json) ************************************
+router.get("/results-data", jwtAuthMiddleware, async (req, res) => {
+  try {
+    const candidates = await Candidate.find().sort({ voteCount: -1 });
+
+    const totalVotes = candidates.reduce((sum, c) => sum + (c.voteCount || 0), 0);
+
+    // create minimal objects for client (avoid sending full documents)
+    const data = candidates.map(c => ({
+      id: c._id,
+      name: c.name,
+      party: c.party,
+      votes: c.voteCount || 0,
+      // percent computed at client or server
+      percent: totalVotes === 0 ? 0 : ((c.voteCount || 0) / totalVotes * 100)
+    }));
+
+    return res.json({ totalVotes, candidates: data });
+  } catch (err) {
+    console.error("Results data error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 module.exports = router;

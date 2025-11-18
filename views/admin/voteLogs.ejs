@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Vote Logs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow">
+        <h1 class="text-3xl font-bold mb-6 text-center">Vote Audit Log</h1>
+
+        <% if (candidates.length === 0) { %>
+            <p class="text-center text-gray-600">No candidates found.</p>
+        <% } %>
+
+        <% candidates.forEach(c => { %>
+
+            <div class="mb-8 border p-4 rounded bg-gray-50">
+
+                <h2 class="text-2xl font-bold mb-2">
+                    <%= c.name %> 
+                    <span class="text-gray-600">(<%= c.party %>)</span>
+                </h2>
+
+                <p class="mb-4 text-gray-700">Total Votes: <strong><%= c.voteCount %></strong></p>
+
+                <% if (c.votes.length === 0) { %>
+                    <div class="text-sm text-gray-500">No votes yet.</div>
+                <% } else { %>
+
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-3 text-left">Voter Name</th>
+                                <th class="p-3 text-left">Email</th>
+                                <th class="p-3 text-left">Mobile</th>
+                                <th class="p-3 text-left">Voted At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <% c.votes.forEach(v => { %>
+                                <tr class="border-b">
+                                    <td class="p-3"><%= v.user?.name || "Deleted User" %></td>
+                                    <td class="p-3"><%= v.user?.email || "-" %></td>
+                                    <td class="p-3"><%= v.user?.mobile || "-" %></td>
+                                    <td class="p-3"><%= new Date(v.votedAt).toLocaleString() %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+
+                <% } %>
+            </div>
+
+        <% }) %>
+
+        <div class="text-center mt-6">
+            <a href="/admin/dashboard" class="text-blue-600 hover:underline">
+                Back to Dashboard
+            </a>
+        </div>
+
+    </div>
+
+</body>
+</html>

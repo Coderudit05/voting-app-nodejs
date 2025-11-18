@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-8">
+
+  <div class="max-w-5xl mx-auto bg-white p-8 rounded shadow">
+
+    <h1 class="text-4xl font-bold mb-6 text-center">Admin Dashboard</h1>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <div class="bg-blue-100 p-6 rounded shadow text-center">
+        <h3 class="text-xl font-bold">Total Users</h3>
+        <p class="text-3xl font-bold mt-2"><%= stats.totalUsers %></p>
+      </div>
+
+      <div class="bg-green-100 p-6 rounded shadow text-center">
+        <h3 class="text-xl font-bold">Total Candidates</h3>
+        <p class="text-3xl font-bold mt-2"><%= stats.totalCandidates %></p>
+      </div>
+
+      <div class="bg-purple-100 p-6 rounded shadow text-center">
+        <h3 class="text-xl font-bold">Total Votes</h3>
+        <p class="text-3xl font-bold mt-2"><%= stats.totalVotes %></p>
+      </div>
+
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="mt-8 flex justify-center space-x-4">
+
+      <a href="/admin/add-candidate-page"
+         class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+        Add Candidate
+      </a>
+
+      <a href="/admin/candidates"
+         class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+        View Candidates
+      </a>
+
+      <a href="/admin/vote-logs"
+         class="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700">
+         Vote Logs
+      </a>
+
+      <a href="/admin/logout"
+         class="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">
+        Logout
+      </a>
+      
+    </div>
+
+  </div>
+
+</body>
+</html>

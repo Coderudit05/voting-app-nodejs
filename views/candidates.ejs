@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Candidates</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-10">
+
+<div class="max-w-4xl mx-auto">
+    
+    <h2 class="text-3xl font-bold mb-6 text-center">Available Candidates</h2>
+
+    <!-- Success / Error Messages -->
+    <% if (typeof success !== "undefined" && success === "voted") { %>
+        <div class="bg-green-200 text-green-800 p-3 rounded mb-4 text-center">
+            Vote submitted successfully!
+        </div>
+    <% } %>
+
+    <% if (typeof error !== "undefined" && error === "already_voted") { %>
+        <div class="bg-red-200 text-red-800 p-3 rounded mb-4 text-center">
+            You have already voted!
+        </div>
+    <% } %>
+
+    <% if (typeof error !== "undefined" && error === "candidate_not_found") { %>
+        <div class="bg-red-200 text-red-800 p-3 rounded mb-4 text-center">
+            Candidate not found!
+        </div>
+    <% } %>
+
+    <div class="space-y-4">
+
+        <% candidates.forEach(c => { %>
+
+            <div class="bg-white p-6 rounded shadow flex justify-between items-center">
+
+                <div>
+                    <h3 class="text-2xl font-bold"><%= c.name %></h3>
+                    <p class="text-gray-600">Party: <%= c.party %></p>
+                    <p class="text-gray-600">Age: <%= c.age %></p>
+                    <p class="text-blue-600 font-semibold">Votes: <%= c.voteCount %></p>
+                </div>
+
+                <div>
+
+                    <% if (!user.isVoted && user.role === "voter") { %>
+
+                        <form action="/api/v1/vote/<%= c._id %>" method="POST">
+                            <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                Vote
+                            </button>
+                        </form>
+
+                    <% } else { %>
+
+                        <button disabled class="bg-gray-400 text-white px-4 py-2 rounded">
+                            Vote Locked
+                        </button>
+
+                    <% } %>
+
+                </div>
+
+            </div>
+
+        <% }) %>
+
+    </div>
+</div>
+
+</body>
+</html>

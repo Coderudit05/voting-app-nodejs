@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>All Candidates</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-10">
+
+    <div class="max-w-3xl mx-auto">
+        <h2 class="text-3xl font-bold mb-6 text-center">All Candidates</h2>
+
+        <div class="flex justify-end space-x-4 mb-4">
+            <a href="/api/v1/admin/add-candidate-page" class="bg-green-600 text-white px-4 py-2 rounded">Add
+                Candidate</a>
+            <a href="/api/v1/admin/users"
+               class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+               View Users
+            </a>
+        </div>
+
+        <div class="space-y-4">
+            <% candidates.forEach(c=> { %>
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-xl font-bold">
+                        <%= c.name %>
+                    </h3>
+                    <p class="text-gray-600">Party: <%= c.party %>
+                    </p>
+                    <p class="text-gray-600">Age: <%= c.age %>
+                    </p>
+                    <p class="font-semibold text-blue-600">Votes: <%= c.voteCount %>
+                    </p>
+                </div>
+                <% }) %>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

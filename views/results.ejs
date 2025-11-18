@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Election Results</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Optional: Chart.js for charts (load only if you want charts) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-3xl font-bold mb-4">Election Results</h1>
+
+    <p class="text-gray-600 mb-6">
+      Total votes cast: <strong><%= totalVotes %></strong>
+    </p>
+
+    <!-- Table: ranked candidates -->
+    <div class="space-y-4">
+      <% if (candidates.length === 0) { %>
+        <div class="text-center text-gray-600">No candidates yet.</div>
+      <% } %>
+
+      <% candidates.forEach((c, idx) => {
+           const votes = c.voteCount || 0;
+           const percent = totalVotes === 0 ? 0 : ((votes / totalVotes) * 100);
+      %>
+        <div class="p-4 rounded border flex items-center justify-between">
+          <div>
+            <div class="flex items-center space-x-3">
+              <div class="text-lg font-semibold"><%= idx + 1 %>. <%= c.name %></div>
+              <div class="text-sm text-gray-500">(<%= c.party %>)</div>
+            </div>
+            <div class="text-sm text-gray-600 mt-1">Votes: <strong><%= votes %></strong> — <%= percent.toFixed(2) %>%</div>
+
+            <!-- visual percentage bar -->
+            <div class="w-full bg-gray-200 h-3 rounded mt-2 overflow-hidden">
+              <div style="width: <%= percent %>%" class="bg-blue-600 h-3"></div>
+            </div>
+          </div>
+
+          <!-- optional: show small spark or avatar placeholder -->
+          <div class="text-right">
+            <div class="text-sm text-gray-700">Rank: <strong><%= idx + 1 %></strong></div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- Chart placeholder -->
+    <div class="mt-8">
+      <canvas id="resultsChart" height="120"></canvas>
+    </div>
+
+    <div class="mt-6 text-center">
+      <a href="/api/v1/profile-page" class="text-blue-600 hover:underline">Back to profile</a>
+    </div>
+  </div>
+
+  <script>
+    // Build chart from server-rendered data to avoid extra fetch.
+    (function () {
+      // Prepare labels & data from server-rendered candidates variable
+      const candidates = <%- JSON.stringify(candidates.map(c => ({ name: c.name, votes: c.voteCount || 0 }))) %>;
+      const labels = candidates.map(c => c.name);
+      const data = candidates.map(c => c.votes);
+
+      const ctx = document.getElementById('resultsChart').getContext('2d');
+
+      // If Chart.js failed to load, this will throw — it's optional
+      try {
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Votes',
+              data,
+              backgroundColor: labels.map(() => 'rgba(59,130,246,0.8)'), // default blue
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
+              }
+            }
+          }
+        });
+      } catch (err) {
+        console.warn('Chart.js not available or failed to render', err);
+      }
+    })();
+  </script>
+</body>
+</html>
